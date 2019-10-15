@@ -8,6 +8,7 @@ import (
 	"github.com/mediocregopher/radix/v3"
 
 	"github.com/stickermule/rump/pkg/message"
+	"sync"
 )
 
 // Redis holds references to a DB pool and a shared message bus.
@@ -71,32 +72,57 @@ func (r *Redis) Read(ctx context.Context) error {
 
 	scanner := radix.NewScanner(r.Pool, radix.ScanAllKeys)
 
+	// Limit number of concurrent goroutines
+	limit := make(chan struct{}, 1000)
+	errors := make(chan error)
+
+	var wg sync.WaitGroup
 	var key string
-	var value string
-	var ttl string
 
 	// Scan and push to bus until no keys are left.
 	// If context Done, exit early.
 	for scanner.Next(&key) {
-		err := r.Pool.Do(radix.Cmd(&value, "DUMP", key))
-		if err != nil {
-			return err
-		}
-
-		ttl, err = r.maybeTTL(key)
-		if err != nil {
-			return err
-		}
-
 		select {
+		case err := <-errors:
+			return err
 		case <-ctx.Done():
-			fmt.Println("")
-			fmt.Println("redis read: exit")
 			return ctx.Err()
-		case r.Bus <- message.Payload{Key: key, Value: value, TTL: ttl}:
-			r.maybeLog("r")
+		case limit <- struct{}{}:
 		}
+
+		wg.Add(1)
+		go func(key string) {
+			defer func() {
+				<-limit
+				wg.Add(-1)
+			}()
+
+			var value string
+			var ttl string
+
+			err := r.Pool.Do(radix.Cmd(&value, "DUMP", key))
+			if err != nil {
+				errors <- err
+			}
+
+			ttl, err = r.maybeTTL(key)
+			if err != nil {
+				errors <- err
+			}
+
+			select {
+			case <-ctx.Done():
+				fmt.Println("")
+				fmt.Println("redis read: exit")
+				errors <- ctx.Err()
+			case r.Bus <- message.Payload{Key: key, Value: value, TTL: ttl}:
+				r.maybeLog("r")
+			}
+		}(key)
 	}
+
+	// Wait with closing the bus for all pending dumps
+	wg.Wait()
 
 	return scanner.Close()
 }
