@@ -20,10 +20,11 @@ type Resource struct {
 // Silent disables verbose mode.
 // TTL enables keys TTL sync.
 type Config struct {
-	Source Resource
-	Target Resource
-	Silent bool
-	TTL    bool
+	Source  Resource
+	Target  Resource
+	Pattern string
+	Silent  bool
+	TTL     bool
 }
 
 // exit will exit and print the usage.
@@ -36,7 +37,7 @@ func exit(e error) {
 
 // validate makes sure from and to are Redis URIs or file paths,
 // and generates the final Config.
-func validate(from, to string, silent, ttl bool) (Config, error) {
+func validate(from, to, pattern string, silent, ttl bool) (Config, error) {
 	cfg := Config{
 		Source: Resource{
 			URI: from,
@@ -44,8 +45,9 @@ func validate(from, to string, silent, ttl bool) (Config, error) {
 		Target: Resource{
 			URI: to,
 		},
-		Silent: silent,
-		TTL:    ttl,
+		Silent:  silent,
+		TTL:     ttl,
+		Pattern: pattern,
 	}
 
 	if strings.HasPrefix(from, "redis://") {
@@ -76,10 +78,12 @@ func Parse() Config {
 	to := flag.String("to", "", example)
 	silent := flag.Bool("silent", false, "optional, no verbose output")
 	ttl := flag.Bool("ttl", false, "optional, enable ttl sync")
+	pattern := flag.String("pattern", "", "optional, redis source key pattern")
 
 	flag.Parse()
 
-	cfg, err := validate(*from, *to, *silent, *ttl)
+	cfg, err := validate(*from, *to, *pattern, *silent, *ttl)
+
 	if err != nil {
 		// we exit here instead of returning so that we can show
 		// the usage examples in case of an error.
