@@ -20,11 +20,12 @@ type Resource struct {
 // Silent disables verbose mode.
 // TTL enables keys TTL sync.
 type Config struct {
-	Source Resource
-	Target Resource
-	Count  int
-	Silent bool
-	TTL    bool
+	Source  Resource
+	Target  Resource
+	Pattern string
+	Count   int
+	Silent  bool
+	TTL     bool
 }
 
 // exit will exit and print the usage.
@@ -37,7 +38,7 @@ func exit(e error) {
 
 // validate makes sure from and to are Redis URIs or file paths,
 // and generates the final Config.
-func validate(from, to string, silent, ttl bool, count int) (Config, error) {
+func validate(from, to, pattern string, silent, ttl bool, count int) (Config, error) {
 	cfg := Config{
 		Source: Resource{
 			URI: from,
@@ -45,9 +46,10 @@ func validate(from, to string, silent, ttl bool, count int) (Config, error) {
 		Target: Resource{
 			URI: to,
 		},
-		Silent: silent,
-		TTL:    ttl,
-		Count:  count,
+		Silent:  silent,
+		TTL:     ttl,
+		Pattern: pattern,
+		Count:   count,
 	}
 
 	if strings.HasPrefix(from, "redis://") {
@@ -78,11 +80,12 @@ func Parse() Config {
 	to := flag.String("to", "", example)
 	silent := flag.Bool("silent", false, "optional, no verbose output")
 	ttl := flag.Bool("ttl", false, "optional, enable ttl sync")
+	pattern := flag.String("pattern", "", "optional, redis source key pattern")
 	count := flag.Int("count", 10000, "optional, redis scan count")
 
 	flag.Parse()
 
-	cfg, err := validate(*from, *to, *silent, *ttl, *count)
+	cfg, err := validate(*from, *to, *pattern, *silent, *ttl, *count)
 
 	if err != nil {
 		// we exit here instead of returning so that we can show
