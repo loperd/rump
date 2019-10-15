@@ -67,10 +67,14 @@ func (r *Redis) maybeTTL(key string) (string, error) {
 // the key/value pair (Payload) on the message Bus channel.
 // It leverages implicit pipelining to speedup large DB reads.
 // To be used in an ErrGroup.
-func (r *Redis) Read(ctx context.Context) error {
+func (r *Redis) Read(ctx context.Context, count int) error {
 	defer close(r.Bus)
 
-	scanner := radix.NewScanner(r.Pool, radix.ScanAllKeys)
+	opts := radix.ScanOpts{
+		Command: "SCAN",
+		Count:   count,
+	}
+	scanner := radix.NewScanner(r.Pool, opts)
 
 	// Limit number of concurrent goroutines
 	limit := make(chan struct{}, 1000)

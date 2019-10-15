@@ -22,6 +22,7 @@ type Resource struct {
 type Config struct {
 	Source Resource
 	Target Resource
+	Count  int
 	Silent bool
 	TTL    bool
 }
@@ -36,7 +37,7 @@ func exit(e error) {
 
 // validate makes sure from and to are Redis URIs or file paths,
 // and generates the final Config.
-func validate(from, to string, silent, ttl bool) (Config, error) {
+func validate(from, to string, silent, ttl bool, count int) (Config, error) {
 	cfg := Config{
 		Source: Resource{
 			URI: from,
@@ -46,6 +47,7 @@ func validate(from, to string, silent, ttl bool) (Config, error) {
 		},
 		Silent: silent,
 		TTL:    ttl,
+		Count:  count,
 	}
 
 	if strings.HasPrefix(from, "redis://") {
@@ -76,10 +78,12 @@ func Parse() Config {
 	to := flag.String("to", "", example)
 	silent := flag.Bool("silent", false, "optional, no verbose output")
 	ttl := flag.Bool("ttl", false, "optional, enable ttl sync")
+	count := flag.Int("count", 10000, "optional, redis scan count")
 
 	flag.Parse()
 
-	cfg, err := validate(*from, *to, *silent, *ttl)
+	cfg, err := validate(*from, *to, *silent, *ttl, *count)
+
 	if err != nil {
 		// we exit here instead of returning so that we can show
 		// the usage examples in case of an error.
