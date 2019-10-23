@@ -76,8 +76,14 @@ func (r *Redis) Read(ctx context.Context) error {
 	limit := make(chan struct{}, 1000)
 	errors := make(chan error)
 
+	defer close(limit)
+	defer close(errors)
+
 	var wg sync.WaitGroup
 	var key string
+
+	// Wait with closing the bus for all pending dumps
+	defer wg.Wait()
 
 	// Scan and push to bus until no keys are left.
 	// If context Done, exit early.
@@ -103,26 +109,24 @@ func (r *Redis) Read(ctx context.Context) error {
 			err := r.Pool.Do(radix.Cmd(&value, "DUMP", key))
 			if err != nil {
 				errors <- err
+				return
 			}
 
 			ttl, err = r.maybeTTL(key)
 			if err != nil {
 				errors <- err
+				return
 			}
 
 			select {
 			case <-ctx.Done():
 				fmt.Println("")
 				fmt.Println("redis read: exit")
-				errors <- ctx.Err()
 			case r.Bus <- message.Payload{Key: key, Value: value, TTL: ttl}:
 				r.maybeLog("r")
 			}
 		}(key)
 	}
-
-	// Wait with closing the bus for all pending dumps
-	wg.Wait()
 
 	return scanner.Close()
 }
