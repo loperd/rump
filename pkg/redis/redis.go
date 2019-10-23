@@ -90,6 +90,7 @@ func (r *Redis) Read(ctx context.Context, pattern string, count int) error {
 	// Wait with closing the bus for all pending dumps
 	defer wg.Wait()
 
+	keys := 0
 	// Scan and push to bus until no keys are left.
 	// If context Done, exit early.
 	for scanner.Next(&key) {
@@ -102,6 +103,7 @@ func (r *Redis) Read(ctx context.Context, pattern string, count int) error {
 		}
 
 		wg.Add(1)
+		keys++
 		go func(key string) {
 			defer func() {
 				<-limit
@@ -132,6 +134,9 @@ func (r *Redis) Read(ctx context.Context, pattern string, count int) error {
 			}
 		}(key)
 	}
+
+	fmt.Println("")
+	fmt.Println("migrated", keys, "keys")
 
 	return scanner.Close()
 }
