@@ -59,8 +59,8 @@ func TestMain(m *testing.M) {
 
 func TestWriteRead(t *testing.T) {
 	// Read all keys from db1, push to shared message bus
-	source := redis.New(db1, ch, false, false)
-	if err := source.Read(ctx); err != nil {
+	source := redis.New(db1, ch, false, false, 25000)
+	if err := source.Read(ctx, "*", 10000); err != nil {
 		t.Error("error: ", err)
 	}
 
@@ -80,7 +80,7 @@ func TestWriteRead(t *testing.T) {
 	}
 
 	// Write from shared message bus to db2
-	target2 := redis.New(db2, ch2, false, false)
+	target2 := redis.New(db2, ch2, false, false, 25000)
 	if err := target2.Write(ctx); err != nil {
 		t.Error("error: ", err)
 	}

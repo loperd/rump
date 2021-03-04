@@ -49,12 +49,12 @@ func TestMain(m *testing.M) {
 // Test db1 to db2 sync
 func TestReadWrite(t *testing.T) {
 	ch = make(message.Bus, 100)
-	source := redis.New(db1, ch, false, false)
-	target := redis.New(db2, ch, false, false)
+	source := redis.New(db1, ch, false, false, 25000)
+	target := redis.New(db2, ch, false, false, 25000)
 	ctx := context.Background()
 
 	// Read all keys from db1, push to shared message bus
-	if err := source.Read(ctx); err != nil {
+	if err := source.Read(ctx, "*", 10000); err != nil {
 		t.Error("error: ", err)
 	}
 
@@ -80,12 +80,12 @@ func TestReadWrite(t *testing.T) {
 // Test db1 to db2 sync with TTL
 func TestReadWriteTTL(t *testing.T) {
 	ch = make(message.Bus, 100)
-	source := redis.New(db1, ch, false, true)
-	target := redis.New(db2, ch, false, true)
+	source := redis.New(db1, ch, false, true, 25000)
+	target := redis.New(db2, ch, false, true, 25000)
 	ctx := context.Background()
 
 	// Read all keys from db1, push to shared message bus
-	if err := source.Read(ctx); err != nil {
+	if err := source.Read(ctx, "*", 10000); err != nil {
 		t.Error("error: ", err)
 	}
 

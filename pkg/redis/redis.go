@@ -4,8 +4,8 @@ package redis
 import (
 	"context"
 	"fmt"
-
 	"github.com/mediocregopher/radix/v3"
+	"strconv"
 
 	"github.com/stickermule/rump/pkg/message"
 	"sync"
@@ -19,15 +19,17 @@ type Redis struct {
 	Bus    message.Bus
 	Silent bool
 	TTL    bool
+	MaxTTL int
 }
 
 // New creates the Redis struct, used to read/write.
-func New(source *radix.Pool, bus message.Bus, silent, ttl bool) *Redis {
+func New(source *radix.Pool, bus message.Bus, silent, ttl bool, maxTtl int) *Redis {
 	return &Redis{
 		Pool:   source,
 		Bus:    bus,
 		Silent: silent,
 		TTL:    ttl,
+		MaxTTL: maxTtl,
 	}
 }
 
@@ -50,8 +52,16 @@ func (r *Redis) maybeTTL(key string) (string, error) {
 
 	// Try getting key TTL.
 	err := r.Pool.Do(radix.Cmd(&ttl, "PTTL", key))
+
 	if err != nil {
 		return ttl, err
+	}
+
+	t, _ := strconv.ParseInt(ttl, 10, 0)
+
+	maxTTL := r.MaxTTL * 1000
+	if int(t) > maxTTL {
+		return "6000", nil
 	}
 
 	// When key has no expire PTTL returns "-1".
@@ -158,6 +168,7 @@ func (r *Redis) Write(ctx context.Context) error {
 				r.Bus = nil
 				continue
 			}
+
 			err := r.Pool.Do(radix.Cmd(nil, "RESTORE", p.Key, p.TTL, p.Value, "REPLACE"))
 			if err != nil {
 				return err

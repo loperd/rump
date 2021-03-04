@@ -5,28 +5,28 @@ import (
 )
 
 func TestNoRedis(t *testing.T) {
-	_, err := validate("/s.rump", "/t.rump", false, false)
+	_, err := validate("/s.rump", "/t.rump", "*", false, false, 10000, 25000)
 	if err == nil {
 		t.Error("file-only operations should not be supported")
 	}
 }
 
 func TestNoFrom(t *testing.T) {
-	_, err := validate("", "redis://t", false, false)
+	_, err := validate("", "redis://t", "*", false, false, 10000, 25000)
 	if err == nil {
 		t.Error("from should be required")
 	}
 }
 
 func TestNoTo(t *testing.T) {
-	_, err := validate("redis://s", "", false, false)
+	_, err := validate("redis://s", "", "*", false, false, 10000, 25000)
 	if err == nil {
 		t.Error("to should be required")
 	}
 }
 
 func TestFromRedisToRedis(t *testing.T) {
-	cfg, err := validate("redis://s", "redis://t", false, false)
+	cfg, err := validate("redis://s", "redis://t", "*", false, false, 10000, 25000)
 	if err != nil {
 		t.Error("from redis to redis should work")
 	}
@@ -49,7 +49,7 @@ func TestFromRedisToRedis(t *testing.T) {
 }
 
 func TestFromRedisToFile(t *testing.T) {
-	cfg, err := validate("redis://s", "/t.rump", false, false)
+	cfg, err := validate("redis://s", "/t.rump", "*", false, false, 10000, 25000)
 	if err != nil {
 		t.Error("from redis to file should work")
 	}
@@ -72,7 +72,7 @@ func TestFromRedisToFile(t *testing.T) {
 }
 
 func TestFromFileToRedis(t *testing.T) {
-	cfg, err := validate("/s.rump", "redis://t", false, false)
+	cfg, err := validate("/s.rump", "redis://t", "*", false, false, 10000, 25000)
 	if err != nil {
 		t.Error("from file to redis should work")
 	}

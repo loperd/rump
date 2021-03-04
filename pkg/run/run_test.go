@@ -63,6 +63,7 @@ func ExampleRun_redisToRedis() {
 			IsRedis: true,
 		},
 		Silent: false,
+		MaxTTL: 25000,
 	}
 
 	run.Run(cfg)
@@ -87,6 +88,7 @@ func ExampleRun_redisToRedisTTL() {
 		},
 		Silent: false,
 		TTL:    true,
+		MaxTTL: 25000,
 	}
 
 	run.Run(cfg)
@@ -110,6 +112,7 @@ func ExampleRun_redisToRedisSilent() {
 			IsRedis: true,
 		},
 		Silent: true,
+		MaxTTL: 25000,
 	}
 
 	run.Run(cfg)
@@ -131,6 +134,7 @@ func ExampleRun_redisToFile() {
 			URI:     "/app/dump.rump",
 			IsRedis: false,
 		},
+		MaxTTL: 25000,
 	}
 
 	run.Run(cfg)
@@ -154,6 +158,7 @@ func ExampleRun_redisToFileTTL() {
 			IsRedis: false,
 		},
 		TTL: true,
+		MaxTTL: 25000,
 	}
 
 	run.Run(cfg)
@@ -176,6 +181,7 @@ func ExampleRun_fileToRedis() {
 			URI:     "/app/dump.rump",
 			IsRedis: false,
 		},
+		MaxTTL: 25000,
 	}
 	run.Run(cfgFileDump)
 
@@ -188,6 +194,7 @@ func ExampleRun_fileToRedis() {
 			URI:     "redis://redis:6379/10",
 			IsRedis: true,
 		},
+		MaxTTL: 25000,
 	}
 	run.Run(cfg)
 	// Output:
@@ -212,6 +219,7 @@ func ExampleRun_fileToRedisTTL() {
 			URI:     "/app/dump.rump",
 			IsRedis: false,
 		},
+		MaxTTL: 25000,
 	}
 	run.Run(cfgFileDump)
 
@@ -225,6 +233,7 @@ func ExampleRun_fileToRedisTTL() {
 			IsRedis: true,
 		},
 		TTL: true,
+		MaxTTL: 25000,
 	}
 	run.Run(cfg)
 	// Output:

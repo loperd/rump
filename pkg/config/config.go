@@ -24,6 +24,7 @@ type Config struct {
 	Target  Resource
 	Pattern string
 	Count   int
+	MaxTTL  int
 	Silent  bool
 	TTL     bool
 }
@@ -38,7 +39,7 @@ func exit(e error) {
 
 // validate makes sure from and to are Redis URIs or file paths,
 // and generates the final Config.
-func validate(from, to, pattern string, silent, ttl bool, count int) (Config, error) {
+func validate(from, to, pattern string, silent, ttl bool, count int, maxTtl int) (Config, error) {
 	cfg := Config{
 		Source: Resource{
 			URI: from,
@@ -50,6 +51,7 @@ func validate(from, to, pattern string, silent, ttl bool, count int) (Config, er
 		TTL:     ttl,
 		Pattern: pattern,
 		Count:   count,
+		MaxTTL:  maxTtl,
 	}
 
 	if strings.HasPrefix(from, "redis://") {
@@ -68,6 +70,8 @@ func validate(from, to, pattern string, silent, ttl bool, count int) (Config, er
 		return cfg, fmt.Errorf("to is required")
 	case !cfg.Source.IsRedis && !cfg.Target.IsRedis:
 		return cfg, fmt.Errorf("file-only operations not supported")
+	case cfg.MaxTTL < 70:
+		return cfg, fmt.Errorf("max ttl can not be less than 70 sec")
 	}
 
 	return cfg, nil
@@ -80,12 +84,13 @@ func Parse() Config {
 	to := flag.String("to", "", example)
 	silent := flag.Bool("silent", false, "optional, no verbose output")
 	ttl := flag.Bool("ttl", false, "optional, enable ttl sync")
+	maxTtl := flag.Int("maxTtl", 2505600, "if max ttl more than that value, set 60 sec ttl")
 	pattern := flag.String("pattern", "", "optional, redis source key pattern")
 	count := flag.Int("count", 10000, "optional, redis scan count")
 
 	flag.Parse()
 
-	cfg, err := validate(*from, *to, *pattern, *silent, *ttl, *count)
+	cfg, err := validate(*from, *to, *pattern, *silent, *ttl, *count, *maxTtl)
 
 	if err != nil {
 		// we exit here instead of returning so that we can show
