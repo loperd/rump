@@ -70,7 +70,7 @@ func validate(from, to, pattern string, silent, ttl bool, count int, maxTtl int)
 		return cfg, fmt.Errorf("to is required")
 	case !cfg.Source.IsRedis && !cfg.Target.IsRedis:
 		return cfg, fmt.Errorf("file-only operations not supported")
-	case cfg.MaxTTL < 70:
+	case cfg.MaxTTL > 0 && cfg.MaxTTL < 70:
 		return cfg, fmt.Errorf("max ttl can not be less than 70 sec")
 	}
 
@@ -84,7 +84,7 @@ func Parse() Config {
 	to := flag.String("to", "", example)
 	silent := flag.Bool("silent", false, "optional, no verbose output")
 	ttl := flag.Bool("ttl", false, "optional, enable ttl sync")
-	maxTtl := flag.Int("maxTtl", 2505600, "if max ttl more than that value, set 60 sec ttl")
+	maxTtl := flag.Int("maxTtl", 0, "if max ttl more than that value, set 60 sec ttl, use 0 for disable this option")
 	pattern := flag.String("pattern", "", "optional, redis source key pattern")
 	count := flag.Int("count", 10000, "optional, redis scan count")
 

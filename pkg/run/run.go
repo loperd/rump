@@ -43,7 +43,7 @@ func Run(cfg config.Config) {
 			exit(err)
 		}
 
-		source := redis.New(db, ch, cfg.Silent, cfg.TTL, cfg.MaxTTL)
+		source := redis.New(db, ch, cfg.Silent, cfg.TTL, 0)
 
 		g.Go(func() error {
 			return source.Read(gctx, cfg.Pattern, cfg.Count)

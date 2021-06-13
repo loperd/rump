@@ -57,17 +57,15 @@ func (r *Redis) maybeTTL(key string) (string, error) {
 		return ttl, err
 	}
 
+	if 0 == r.MaxTTL {
+		return ttl, nil
+	}
+
 	t, _ := strconv.ParseInt(ttl, 10, 0)
 
 	maxTTL := r.MaxTTL * 1000
-	if int(t) > maxTTL {
-		return "6000", nil
-	}
-
-	// When key has no expire PTTL returns "-1".
-	// We set it to 0, default for no expiration time.
-	if ttl == "-1" {
-		ttl = "0"
+	if maxTTL < int(t) || ttl == "-1" {
+		return strconv.Itoa(r.MaxTTL), nil
 	}
 
 	return ttl, nil
